@@ -5,15 +5,17 @@ import android.util.AttributeSet
 import com.pdfview.subsamplincscaleimageview.ImageSource
 import com.pdfview.subsamplincscaleimageview.SubsamplingScaleImageView
 import java.io.File
+import java.util.*
 
 class PDFView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : SubsamplingScaleImageView(context, attrs) {
 
     private var mfile: File? = null
     private var mScale: Float = 8f
+    private var pdfRegionDecoder: PDFRegionDecoder? = null
 
     init {
         setMinimumTileDpi(120)
-        setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_START)
+        setMinimumScaleType(SCALE_TYPE_START)
     }
 
     fun fromAsset(assetFileName: String): PDFView {
@@ -38,8 +40,22 @@ class PDFView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
 
     fun show() {
         val source = ImageSource.uri(mfile!!.path)
-        setRegionDecoderFactory { PDFRegionDecoder(view = this, file = mfile!!, scale = mScale) }
+        pdfRegionDecoder = PDFRegionDecoder(view = this, file = mfile!!, scale = mScale)
+        setRegionDecoderFactory { pdfRegionDecoder!! }
         setImage(source)
+    }
+
+    fun getPageCount():Int {
+        return if (pdfRegionDecoder == null) 0 else pdfRegionDecoder!!.getPageCount()
+    }
+
+    fun scrollToPage(pageNo: Int) {
+        Objects.requireNonNull(pdfRegionDecoder, "PDFRegionDecoder not initialized");
+
+        val scrollPos = (pageNo - 1) * pdfRegionDecoder!!.getPageHeight() * scale
+        vTranslate.y = -scrollPos
+        refreshRequiredTiles(true)
+        invalidate()
     }
 
     override fun onDetachedFromWindow() {

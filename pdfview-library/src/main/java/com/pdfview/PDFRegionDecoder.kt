@@ -16,7 +16,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
                                 @param:ColorInt private val backgroundColorPdf: Int = Color.WHITE) : ImageRegionDecoder {
 
     private lateinit var descriptor: ParcelFileDescriptor
-    private lateinit var renderer: PdfRenderer
+    private var renderer: PdfRenderer? = null
     private var pageWidth = 0
     private var pageHeight = 0
 
@@ -24,16 +24,16 @@ internal class PDFRegionDecoder(private val view: PDFView,
     override fun init(context: Context, uri: Uri): Point {
         descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
         renderer = PdfRenderer(descriptor)
-        val page = renderer.openPage(0)
+        val page = renderer!!.openPage(0)
         pageWidth = (page.width * scale).toInt()
         pageHeight = (page.height * scale).toInt()
-        if (renderer.pageCount > 15) {
+        if (renderer!!.pageCount > 15) {
             view.setHasBaseLayerTiles(false)
-        } else if (renderer.pageCount == 1) {
+        } else if (renderer!!.pageCount == 1) {
             view.setMinimumScaleType(SCALE_TYPE_CENTER_INSIDE)
         }
         page.close()
-        return Point(pageWidth,pageHeight * renderer.pageCount)
+        return Point(pageWidth, pageHeight * renderer!!.pageCount)
     }
 
     override fun decodeRegion(rect: Rect, sampleSize: Int): Bitmap {
@@ -44,13 +44,13 @@ internal class PDFRegionDecoder(private val view: PDFView,
         canvas.drawColor(backgroundColorPdf)
         canvas.drawBitmap(bitmap, 0f, 0f, null)
         for ((iteration, pageIndex) in (numPageAtStart..numPageAtEnd).withIndex()) {
-            synchronized(renderer) {
-                val page = renderer.openPage(pageIndex)
+            synchronized(renderer!!) {
+                val page = renderer!!.openPage(pageIndex)
                 val matrix = Matrix()
                 matrix.setScale(scale / sampleSize, scale / sampleSize)
                 matrix.postTranslate(
                         (-rect.left / sampleSize).toFloat(), -((rect.top - pageHeight * numPageAtStart) / sampleSize).toFloat() + (pageHeight.toFloat() / sampleSize) * iteration)
-                page.render(bitmap,null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                 page.close()
             }
         }
@@ -62,9 +62,19 @@ internal class PDFRegionDecoder(private val view: PDFView,
     }
 
     override fun recycle() {
-        renderer.close()
+        if (renderer != null) {
+            renderer!!.close()
+        }
         descriptor.close()
         pageWidth = 0
         pageHeight = 0
+    }
+
+    fun getPageHeight(): Int {
+        return pageHeight
+    }
+
+    fun getPageCount(): Int {
+        return if (renderer == null) 0 else renderer!!.pageCount
     }
 }

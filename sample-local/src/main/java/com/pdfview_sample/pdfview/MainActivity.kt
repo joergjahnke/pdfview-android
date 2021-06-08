@@ -2,6 +2,8 @@ package com.pdfview_sample.pdfview
 
 import android.content.DialogInterface
 import android.os.Bundle
+import android.widget.Button
+import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.pdfview.PDFView
@@ -16,6 +18,14 @@ class MainActivity : AppCompatActivity() {
 
         val view = findViewById<PDFView>(R.id.activity_main_pdf_view)
         view.setPanLimit(SubsamplingScaleImageView.PAN_LIMIT_OUTSIDE)
+        val gotoPageButton = findViewById<Button>(R.id.gotoPageButton)
+        gotoPageButton.setOnClickListener {
+            val pageNoView = findViewById<EditText>(R.id.pageNo)
+            val pageNoInput = Integer.parseInt(pageNoView.text.toString())
+            val pageCount = view.getPageCount()
+            val pageNo = Math.max(1, Math.min(pageNoInput, pageCount))
+            view.scrollToPage(pageNo)
+        }
         //view.setDebug(true)
 
         // Place some pdf files to /storage/emulated/0/Android/data/com.pdfview_sample.sample/files

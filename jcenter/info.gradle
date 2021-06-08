@@ -9,8 +9,8 @@ ext {
 
     libraryDescription = 'Small library to show PDF files in your native android application'
 
-    siteUrl = 'https://github.com/Dmitry-Borodin/pdfview'
-    gitUrl = 'https://github.com/Dmitry-Borodin/pdfview'
+    siteUrl = 'https://github.com/joergjahnke/pdfview'
+    gitUrl = 'https://github.com/joergjahnke/pdfview'
 
     developerId = 'Dmitry-Borodin'
     developerName = 'Dmitry Borodin'

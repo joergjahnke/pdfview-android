@@ -29,23 +29,27 @@ internal class PDFRegionDecoder(private val view: PDFView,
         descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
         renderer = PdfRenderer(descriptor)
 
-        val firstPage = renderer!!.openPage(0)
-        firstPageWidth = (firstPage.width * scale).toInt()
-        firstPageHeight = (firstPage.height * scale).toInt()
-        if (renderer!!.pageCount > 15) {
-            view.setHasBaseLayerTiles(false)
-        } else if (renderer!!.pageCount == 1) {
-            view.setMinimumScaleType(SCALE_TYPE_CENTER_INSIDE)
-        }
-        firstPage.close()
-
-        pageSizes = generateSequence(0, { it + 1 }).take(getPageCount())
-                .map {
-                    val page = renderer!!.openPage(it)
-                    page.close()
-                    Size(page.width, page.height)
+        synchronized(renderer!!) {
+            val firstPage = renderer!!.openPage(0)
+            firstPage.use {
+                firstPageWidth = (firstPage.width * scale).toInt()
+                firstPageHeight = (firstPage.height * scale).toInt()
+                if (renderer!!.pageCount > 15) {
+                    view.setHasBaseLayerTiles(false)
+                } else if (renderer!!.pageCount == 1) {
+                    view.setMinimumScaleType(SCALE_TYPE_CENTER_INSIDE)
                 }
-                .toList()
+            }
+
+            pageSizes = generateSequence(0, { it + 1 }).take(getPageCount())
+                    .map {
+                        val page = renderer!!.openPage(it)
+                        page.use {
+                            Size(page.width, page.height)
+                        }
+                    }
+                    .toList()
+        }
 
         val maxWidth = pageSizes!!.maxOf { size -> size.width } * scale
         val totalHeight = pageSizes!!.asSequence().map { size -> size.height }.sum() * scale
@@ -62,12 +66,13 @@ internal class PDFRegionDecoder(private val view: PDFView,
         for ((iteration, pageIndex) in (numPageAtStart..numPageAtEnd).withIndex()) {
             synchronized(renderer!!) {
                 val page = renderer!!.openPage(pageIndex)
-                val matrix = Matrix()
-                matrix.setScale(scale / sampleSize, scale / sampleSize)
-                matrix.postTranslate(
-                        (-rect.left / sampleSize).toFloat(), -((rect.top - firstPageHeight * numPageAtStart) / sampleSize).toFloat() + (firstPageHeight.toFloat() / sampleSize) * iteration)
-                page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                page.close()
+                page.use {
+                    val matrix = Matrix()
+                    matrix.setScale(scale / sampleSize, scale / sampleSize)
+                    matrix.postTranslate(
+                            (-rect.left / sampleSize).toFloat(), -((rect.top - firstPageHeight * numPageAtStart) / sampleSize).toFloat() + (firstPageHeight.toFloat() / sampleSize) * iteration)
+                    page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                }
             }
         }
         return bitmap

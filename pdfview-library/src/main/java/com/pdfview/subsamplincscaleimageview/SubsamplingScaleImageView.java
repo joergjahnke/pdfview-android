@@ -886,7 +886,10 @@ public class SubsamplingScaleImageView extends View {
                                 vTranslate.y = vCenterStart.y - vTopNow;
                                 if ((previousScale * sHeight() < getHeight() && scale * sHeight() >= getHeight()) || (previousScale * sWidth() < getWidth() && scale * sWidth() >= getWidth())) {
                                     fitToBounds(true);
-                                    vCenterStart.set(sourceToViewCoord(quickScaleSCenter));
+                                    final PointF viewCoord = sourceToViewCoord(quickScaleSCenter);
+                                    if (viewCoord != null) {
+                                        vCenterStart.set(viewCoord);
+                                    }
                                     vTranslateStart.set(vTranslate);
                                     scaleStart = scale;
                                     dist = 0;
@@ -1589,28 +1592,33 @@ public class SubsamplingScaleImageView extends View {
                 sTileHeight = sHeight() / yTiles;
                 subTileHeight = sTileHeight / sampleSize;
             }
-            List<Tile> tileGrid = new ArrayList<>(xTiles * yTiles);
-            for (int x = 0; x < xTiles; x++) {
-                for (int y = 0; y < yTiles; y++) {
-                    Tile tile = new Tile();
-                    tile.sampleSize = sampleSize;
-                    tile.visible = sampleSize == fullImageSampleSize;
-                    tile.sRect = new Rect(
-                            x * sTileWidth,
-                            y * sTileHeight,
-                            x == xTiles - 1 ? sWidth() : (x + 1) * sTileWidth,
-                            y == yTiles - 1 ? sHeight() : (y + 1) * sTileHeight
-                    );
-                    tile.vRect = new Rect(0, 0, 0, 0);
-                    tile.fileSRect = new Rect(tile.sRect);
-                    tileGrid.add(tile);
+            try {
+                List<Tile> tileGrid = new ArrayList<>(xTiles * yTiles);
+                for (int x = 0; x < xTiles; x++) {
+                    for (int y = 0; y < yTiles; y++) {
+                        Tile tile = new Tile();
+                        tile.sampleSize = sampleSize;
+                        tile.visible = sampleSize == fullImageSampleSize;
+                        tile.sRect = new Rect(
+                                x * sTileWidth,
+                                y * sTileHeight,
+                                x == xTiles - 1 ? sWidth() : (x + 1) * sTileWidth,
+                                y == yTiles - 1 ? sHeight() : (y + 1) * sTileHeight
+                        );
+                        tile.vRect = new Rect(0, 0, 0, 0);
+                        tile.fileSRect = new Rect(tile.sRect);
+                        tileGrid.add(tile);
+                    }
                 }
-            }
-            tileMap.put(sampleSize, tileGrid);
-            if (sampleSize == 1) {
+                tileMap.put(sampleSize, tileGrid);
+                if (sampleSize == 1) {
+                    break;
+                } else {
+                    sampleSize /= 2;
+                }
+            } catch (OutOfMemoryError e) {
+                // there may simply be too many tiles => we just stop then and have to live with what we got until then
                 break;
-            } else {
-                sampleSize /= 2;
             }
         }
     }

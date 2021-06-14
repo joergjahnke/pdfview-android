@@ -449,7 +449,7 @@ public class SkiaPooledImageRegionDecoder implements ImageRegionDecoder {
         try {
             File dir = new File("/sys/devices/system/cpu/");
             File[] files = dir.listFiles(new CpuFilter());
-            return files.length;
+            return files == null ? 1 : files.length;
         } catch(Exception e) {
             return 1;
         }

@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
             val pageNoView = findViewById<EditText>(R.id.pageNo)
             val pageNoInput = Integer.parseInt(pageNoView.text.toString())
             val pageCount = view.getPageCount()
-            val pageNo = Math.max(1, Math.min(pageNoInput, pageCount))
+            val pageNo = 1.coerceAtLeast(pageNoInput.coerceAtMost(pageCount))
             view.scrollToPage(pageNo)
         }
         //view.setDebug(true)

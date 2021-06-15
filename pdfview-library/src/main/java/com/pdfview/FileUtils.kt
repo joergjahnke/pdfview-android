@@ -10,7 +10,7 @@ internal object FileUtils {
     fun fileFromAsset(context: Context, assetFileName: String): File {
         val outFile = File(context.cacheDir, "$assetFileName-pdfview.pdf")
         if (assetFileName.contains("/")) {
-            outFile.parentFile.mkdirs()
+            outFile.parentFile?.mkdirs()
         }
         context.assets.open(assetFileName).copyTo(outFile.outputStream())
         return outFile

@@ -1,5 +1,6 @@
 package com.pdfview.subsamplincscaleimageview;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -1930,7 +1931,8 @@ public class SubsamplingScaleImageView extends View {
         int exifOrientation = ORIENTATION_0;
         Cursor cursor = null;
         try {
-            String[] columns = {MediaStore.Images.Media.ORIENTATION};
+            @SuppressLint("InlinedApi") // it's safe to use the constant Media.ORIENTATION here
+            final String[] columns = {MediaStore.Images.Media.ORIENTATION};
             cursor = context.getContentResolver().query(Uri.parse(sourceUri), columns, null, null, null);
             if (cursor != null) {
                 if (cursor.moveToFirst()) {

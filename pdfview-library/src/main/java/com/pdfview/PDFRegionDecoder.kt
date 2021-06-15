@@ -69,8 +69,9 @@ internal class PDFRegionDecoder(private val view: PDFView,
                 page.use {
                     val matrix = Matrix()
                     matrix.setScale(scale / sampleSize, scale / sampleSize)
-                    matrix.postTranslate(
-                            (-rect.left / sampleSize).toFloat(), -((rect.top - firstPageHeight * numPageAtStart) / sampleSize).toFloat() + (firstPageHeight.toFloat() / sampleSize) * iteration)
+                    val dx = (-rect.left / sampleSize).toFloat()
+                    val dy = -((rect.top - firstPageHeight * numPageAtStart) / sampleSize).toFloat() + (firstPageHeight.toFloat() / sampleSize) * iteration
+                    matrix.postTranslate(dx, dy)
                     page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                 }
             }
@@ -89,6 +90,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
         descriptor.close()
         firstPageWidth = 0
         firstPageHeight = 0
+        pageSizes = null
     }
 
     fun getPageHeight(): Int {

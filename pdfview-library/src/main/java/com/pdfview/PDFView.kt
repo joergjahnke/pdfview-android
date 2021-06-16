@@ -50,7 +50,7 @@ class PDFView @JvmOverloads constructor(context: Context, attrs: AttributeSet? =
     }
 
     fun scrollToPage(pageNo: Int) {
-        Objects.requireNonNull(pdfRegionDecoder, "PDFRegionDecoder not initialized");
+        Objects.requireNonNull(pdfRegionDecoder, "PDFRegionDecoder not initialized")
 
         val scrollPos = (pageNo - 1) * pdfRegionDecoder!!.getPageHeight() * scale
         vTranslate.y = -scrollPos

@@ -1647,8 +1647,9 @@ public class SubsamplingScaleImageView extends View {
                 } else {
                     sampleSize /= 2;
                 }
-            } catch (OutOfMemoryError e) {
+            } catch (OutOfMemoryError | IllegalArgumentException e) {
                 // there may simply be too many tiles => we just stop then and have to live with what we got until then
+                Log.w(TAG, "Could not create tile grid for sample size " + sampleSize);
                 break;
             }
         }

@@ -24,6 +24,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
     private var firstPageHeight = 0
     private var pageSizes: List<Size>? = null
 
+    @Synchronized
     @Throws(Exception::class)
     override fun init(context: Context, uri: Uri): Point {
         descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
@@ -56,6 +57,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
         return Point(maxWidth.toInt(), totalHeight.toInt())
     }
 
+    @Synchronized
     override fun decodeRegion(rect: Rect, sampleSize: Int): Bitmap {
         val numPageAtStart = floor(rect.top.toDouble() / firstPageHeight).toInt()
         val numPageAtEnd = ceil(rect.bottom.toDouble() / firstPageHeight).toInt() - 1
@@ -83,6 +85,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
         return firstPageWidth > 0 && firstPageHeight > 0
     }
 
+    @Synchronized
     override fun recycle() {
         if (renderer != null) {
             renderer!!.close()
@@ -98,6 +101,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
         return firstPageHeight
     }
 
+    @Synchronized
     fun getPageCount(): Int {
         return try {
             if (renderer == null) 0 else renderer!!.pageCount

@@ -86,6 +86,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
     override fun recycle() {
         if (renderer != null) {
             renderer!!.close()
+            renderer = null
         }
         descriptor.close()
         firstPageWidth = 0

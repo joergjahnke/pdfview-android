@@ -24,7 +24,6 @@ internal class PDFRegionDecoder(private val view: PDFView,
     private var firstPageHeight = 0
     private var pageSizes: List<Size>? = null
 
-    @Synchronized
     @Throws(Exception::class)
     override fun init(context: Context, uri: Uri): Point {
         descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
@@ -57,7 +56,6 @@ internal class PDFRegionDecoder(private val view: PDFView,
         return Point(maxWidth.toInt(), totalHeight.toInt())
     }
 
-    @Synchronized
     override fun decodeRegion(rect: Rect, sampleSize: Int): Bitmap {
         val numPageAtStart = floor(rect.top.toDouble() / firstPageHeight).toInt()
         val numPageAtEnd = ceil(rect.bottom.toDouble() / firstPageHeight).toInt() - 1
@@ -88,8 +86,10 @@ internal class PDFRegionDecoder(private val view: PDFView,
     @Synchronized
     override fun recycle() {
         if (renderer != null) {
-            renderer!!.close()
-            renderer = null
+            synchronized(renderer!!) {
+                renderer!!.close()
+                renderer = null
+            }
         }
         descriptor.close()
         firstPageWidth = 0
@@ -101,10 +101,13 @@ internal class PDFRegionDecoder(private val view: PDFView,
         return firstPageHeight
     }
 
-    @Synchronized
     fun getPageCount(): Int {
         return try {
-            if (renderer == null) 0 else renderer!!.pageCount
+            if (renderer == null) 0 else {
+                synchronized(renderer!!) {
+                    renderer!!.pageCount
+                }
+            }
         } catch (e: IllegalStateException) {
             // this may happen if the Renderer already got closed
             0

@@ -534,8 +534,8 @@ public class SubsamplingScaleImageView extends View {
                 if (uri == null && previewSource.getResource() != null) {
                     uri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getContext().getPackageName() + "/" + previewSource.getResource());
                 }
-                BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, true);
-                execute(task);
+                final BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, true);
+                task.executeOnExecutor(executor);
             }
         }
 
@@ -551,12 +551,12 @@ public class SubsamplingScaleImageView extends View {
             }
             if (imageSource.getTile() || sRegion != null) {
                 // Load the bitmap using tile decoding.
-                TilesInitTask task = new TilesInitTask(this, getContext(), regionDecoderFactory, uri);
-                execute(task);
+                final TilesInitTask task = new TilesInitTask(this, getContext(), regionDecoderFactory, uri);
+                task.executeOnExecutor(executor);
             } else {
                 // Load the bitmap as a single image.
-                BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, false);
-                execute(task);
+                final BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, false);
+                task.executeOnExecutor(executor);
             }
         }
     }
@@ -1368,7 +1368,12 @@ public class SubsamplingScaleImageView extends View {
         satTemp = new ScaleAndTranslate(0f, new PointF(0, 0));
         fitToBounds(true, satTemp);
 
+        // Load with increased resolution - next level will be split into four tiles and at the center all four are required,
+        // so don't bother with tiling until the next level 16 tiles are needed.
         fullImageSampleSize = calculateInSampleSize(satTemp.scale);
+        if (fullImageSampleSize > 1) {
+            fullImageSampleSize = fullImageSampleSize * 2 / 3;
+        }
 
         if (fullImageSampleSize == 1 && sRegion == null && sWidth() < maxTileDimensions.x && sHeight() < maxTileDimensions.y) {
 
@@ -1378,8 +1383,8 @@ public class SubsamplingScaleImageView extends View {
                 decoder.recycle();
             }
             decoder = null;
-            BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, false);
-            execute(task);
+            final BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, false);
+            task.executeOnExecutor(executor);
 
         } else {
             initialiseTileMap(maxTileDimensions);
@@ -1389,13 +1394,13 @@ public class SubsamplingScaleImageView extends View {
             assert decoder != null;
             if (hasBaseLayerTiles) {
                 for (Tile baseTile : baseGrid) {
-                    TileLoadTask task = new TileLoadTask(this, decoder, baseTile);
-                    execute(task);
+                    final TileLoadTask task = new TileLoadTask(this, decoder, baseTile);
+                    task.executeOnExecutor(executor);
                 }
                 refreshRequiredTiles(true);
             } else {
-                TileLoadTask task = new TileLoadTask(this, decoder, baseGrid.get(0));
-                execute(task);
+                final TileLoadTask task = new TileLoadTask(this, decoder, baseGrid.get(0));
+                task.executeOnExecutor(executor);
             }
         }
     }
@@ -1427,8 +1432,8 @@ public class SubsamplingScaleImageView extends View {
                     if (tileVisible(tile)) {
                         tile.visible = true;
                         if (!tile.loading && tile.bitmap == null && load) {
-                            TileLoadTask task = new TileLoadTask(this, decoder, tile);
-                            execute(task);
+                            final TileLoadTask task = new TileLoadTask(this, decoder, tile);
+                            task.executeOnExecutor(executor);
                         }
                     } else if (tile.sampleSize != fullImageSampleSize || !hasBaseLayerTiles) {
                         tile.visible = false;
@@ -1983,10 +1988,6 @@ public class SubsamplingScaleImageView extends View {
             }
         }
         return exifOrientation;
-    }
-
-    private void execute(@NonNull final AsyncTask<Void, Void, ?> asyncTask) {
-        asyncTask.executeOnExecutor(executor);
     }
 
     private static class Tile {

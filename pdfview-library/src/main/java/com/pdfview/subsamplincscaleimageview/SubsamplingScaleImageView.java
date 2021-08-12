@@ -1372,7 +1372,7 @@ public class SubsamplingScaleImageView extends View {
         // so don't bother with tiling until the next level 16 tiles are needed.
         fullImageSampleSize = calculateInSampleSize(satTemp.scale);
         if (fullImageSampleSize > 1) {
-            fullImageSampleSize = fullImageSampleSize * 2 / 3;
+            fullImageSampleSize /= 2;
         }
 
         if (fullImageSampleSize == 1 && sRegion == null && sWidth() < maxTileDimensions.x && sHeight() < maxTileDimensions.y) {

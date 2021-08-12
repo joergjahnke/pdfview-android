@@ -1,6 +1,7 @@
 package com.pdfview.subsamplincscaleimageview;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -1368,10 +1369,10 @@ public class SubsamplingScaleImageView extends View {
         satTemp = new ScaleAndTranslate(0f, new PointF(0, 0));
         fitToBounds(true, satTemp);
 
-        // Load with increased resolution - next level will be split into four tiles and at the center all four are required,
+        // Load with increased resolution on fast devices - next level will be split into four tiles and at the center all four are required,
         // so don't bother with tiling until the next level 16 tiles are needed.
         fullImageSampleSize = calculateInSampleSize(satTemp.scale);
-        if (fullImageSampleSize > 1) {
+        if (fullImageSampleSize > 1 && isFastDevice()) {
             fullImageSampleSize /= 2;
         }
 
@@ -1403,6 +1404,22 @@ public class SubsamplingScaleImageView extends View {
                 task.executeOnExecutor(executor);
             }
         }
+    }
+
+    /**
+     * Try to determine whether the code gets executed on a "fast" device. That's hard to determine on Android.
+     * The thing we therefore do here is deducting from the total device RAM whether the device is "fast" or not,
+     * with >= 3 GB of total RAM (excluding some DMA buffers, RAM for the baseband etc. meaning the device is "fast".
+     *
+     * @return true if this is a fast device, false if it is slow
+     */
+    private boolean isFastDevice() {
+        final ActivityManager activityManager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+        if (activityManager == null) return false;
+
+        final ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo(mi);
+        return mi.totalMem > 3L * 1024 * 1024 * 1024;
     }
 
     /**

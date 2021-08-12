@@ -750,6 +750,7 @@ public class SubsamplingScaleImageView extends View {
      * Handle touch events. One finger pans, and two finger pinch and zoom plus panning.
      */
     @Override
+    @SuppressLint("ClickableViewAccessibility") // currently I don't see a way how to add a useful performClick implementation
     public boolean onTouchEvent(@NonNull final MotionEvent event) {
         // During non-interruptible anims, ignore all touch events
         if (anim != null && !anim.interruptible) {
@@ -773,6 +774,7 @@ public class SubsamplingScaleImageView extends View {
             }
             return true;
         }
+
         // Detect flings, taps and double taps
         if (!isQuickScaling && (detector == null || detector.onTouchEvent(event))) {
             isZooming = false;

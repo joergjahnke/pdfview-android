@@ -1628,11 +1628,12 @@ public class SubsamplingScaleImageView extends View {
      */
     private void initialiseTileMap(@NonNull final Point maxTileDimensions) {
         debug("initialiseTileMap maxTileDimensions=%dx%d", maxTileDimensions.x, maxTileDimensions.y);
+
         this.tileMap = new LinkedHashMap<>();
         int sampleSize = fullImageSampleSize;
         int xTiles = 1;
         int yTiles = 1;
-        while (true) {
+        do {
             int sTileWidth = sWidth() / xTiles;
             int sTileHeight = sHeight() / yTiles;
             int subTileWidth = sTileWidth / sampleSize;
@@ -1647,11 +1648,12 @@ public class SubsamplingScaleImageView extends View {
                 sTileHeight = sHeight() / yTiles;
                 subTileHeight = sTileHeight / sampleSize;
             }
+
             try {
-                List<Tile> tileGrid = new ArrayList<>(xTiles * yTiles);
+                final List<Tile> tileGrid = new ArrayList<>(xTiles * yTiles);
                 for (int x = 0; x < xTiles; x++) {
                     for (int y = 0; y < yTiles; y++) {
-                        Tile tile = new Tile();
+                        final Tile tile = new Tile();
                         tile.sampleSize = sampleSize;
                         tile.visible = sampleSize == fullImageSampleSize;
                         tile.sRect = new Rect(
@@ -1666,17 +1668,16 @@ public class SubsamplingScaleImageView extends View {
                     }
                 }
                 tileMap.put(sampleSize, tileGrid);
-                if (sampleSize == 1) {
-                    break;
-                } else {
-                    sampleSize /= 2;
-                }
             } catch (OutOfMemoryError | IllegalArgumentException e) {
                 // there may simply be too many tiles => we just stop then and have to live with what we got until then
                 Log.w(TAG, "Could not create tile grid for sample size " + sampleSize);
                 break;
             }
-        }
+
+            if (sampleSize > 1) {
+                sampleSize /= 2;
+            }
+        } while (sampleSize > 1);
     }
 
     /**

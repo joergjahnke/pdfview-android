@@ -103,11 +103,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
 
     fun getPageCount(): Int {
         return try {
-            if (renderer == null) 0 else {
-                synchronized(renderer!!) {
-                    renderer!!.pageCount
-                }
-            }
+            if (renderer == null) 0 else renderer!!.pageCount
         } catch (e: IllegalStateException) {
             // this may happen if the Renderer already got closed
             0

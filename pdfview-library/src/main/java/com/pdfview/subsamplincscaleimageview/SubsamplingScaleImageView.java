@@ -1543,7 +1543,7 @@ public class SubsamplingScaleImageView extends View {
             power = power * 2;
         }
 
-        return power;
+        return Math.max(2, power);
     }
 
     /**

@@ -10,8 +10,6 @@ import androidx.annotation.ColorInt
 import com.pdfview.subsamplincscaleimageview.SubsamplingScaleImageView.SCALE_TYPE_CENTER_INSIDE
 import com.pdfview.subsamplincscaleimageview.decoder.ImageRegionDecoder
 import java.io.File
-import kotlin.math.ceil
-import kotlin.math.floor
 
 internal class PDFRegionDecoder(private val view: PDFView,
                                 private val file: File,
@@ -20,8 +18,6 @@ internal class PDFRegionDecoder(private val view: PDFView,
 
     private lateinit var descriptor: ParcelFileDescriptor
     private var renderer: PdfRenderer? = null
-    private var firstPageWidth = 0
-    private var firstPageHeight = 0
     private var pageSizes: List<Size>? = null
 
     @Throws(Exception::class)
@@ -29,19 +25,14 @@ internal class PDFRegionDecoder(private val view: PDFView,
         descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
         renderer = PdfRenderer(descriptor)
 
-        synchronized(renderer!!) {
-            val firstPage = renderer!!.openPage(0)
-            firstPage.use {
-                firstPageWidth = (firstPage.width * scale).toInt()
-                firstPageHeight = (firstPage.height * scale).toInt()
-                if (renderer!!.pageCount > 15) {
-                    view.setHasBaseLayerTiles(false)
-                } else if (renderer!!.pageCount == 1) {
-                    view.setMinimumScaleType(SCALE_TYPE_CENTER_INSIDE)
-                }
-            }
+        if (renderer!!.pageCount > 15) {
+            view.setHasBaseLayerTiles(false)
+        } else if (renderer!!.pageCount == 1) {
+            view.setMinimumScaleType(SCALE_TYPE_CENTER_INSIDE)
+        }
 
-            pageSizes = generateSequence(0, { it + 1 }).take(getPageCount())
+        synchronized(renderer!!) {
+            pageSizes = generateSequence(0) { it + 1 }.take(getPageCount())
                     .map {
                         val page = renderer!!.openPage(it)
                         page.use {
@@ -57,8 +48,8 @@ internal class PDFRegionDecoder(private val view: PDFView,
     }
 
     override fun decodeRegion(rect: Rect, sampleSize: Int): Bitmap {
-        val numPageAtStart = floor(rect.top.toDouble() / firstPageHeight).toInt()
-        val numPageAtEnd = ceil(rect.bottom.toDouble() / firstPageHeight).toInt() - 1
+        val numPageAtStart = calculatePageNoAtScrollPos(rect.top)
+        val numPageAtEnd = calculatePageNoAtScrollPos(rect.bottom - 1)
         val bitmap = Bitmap.createBitmap(rect.width() / sampleSize, rect.height() / sampleSize, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.drawColor(backgroundColorPdf)
@@ -70,7 +61,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
                     val matrix = Matrix()
                     matrix.setScale(scale / sampleSize, scale / sampleSize)
                     val dx = (-rect.left / sampleSize).toFloat()
-                    val dy = -((rect.top - firstPageHeight * numPageAtStart) / sampleSize).toFloat() + (firstPageHeight.toFloat() / sampleSize) * iteration
+                    val dy = -((rect.top - calculateScrollPosForPageNo(numPageAtStart)) / sampleSize).toFloat() + (getPageHeight(0).toFloat() / sampleSize) * iteration
                     matrix.postTranslate(dx, dy)
                     page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                 }
@@ -80,7 +71,7 @@ internal class PDFRegionDecoder(private val view: PDFView,
     }
 
     override fun isReady(): Boolean {
-        return firstPageWidth > 0 && firstPageHeight > 0
+        return pageSizes != null && pageSizes!![0].width > 0 && pageSizes!![0].height > 0
     }
 
     @Synchronized
@@ -92,13 +83,11 @@ internal class PDFRegionDecoder(private val view: PDFView,
             }
         }
         descriptor.close()
-        firstPageWidth = 0
-        firstPageHeight = 0
         pageSizes = null
     }
 
-    fun getPageHeight(): Int {
-        return firstPageHeight
+    private fun getPageHeight(page: Int): Int {
+        return if (pageSizes == null) 0 else (pageSizes!![page].height * scale).toInt()
     }
 
     fun getPageCount(): Int {
@@ -108,5 +97,23 @@ internal class PDFRegionDecoder(private val view: PDFView,
             // this may happen if the Renderer already got closed
             0
         }
+    }
+
+    fun calculatePageNoAtScrollPos(yPos : Int): Int {
+        var pageNo = -1
+        var y = 0
+        while (y <= yPos) {
+            y += getPageHeight(pageNo + 1)
+            ++pageNo
+        }
+        return pageNo
+    }
+
+    fun calculateScrollPosForPageNo(pageNo: Int): Int {
+        var y = 0
+        for (page in 0 until pageNo) {
+            y += getPageHeight(page)
+        }
+        return y
     }
 }

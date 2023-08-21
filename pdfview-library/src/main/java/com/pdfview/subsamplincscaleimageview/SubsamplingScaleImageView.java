@@ -1393,6 +1393,7 @@ public class SubsamplingScaleImageView extends View {
             initialiseTileMap(maxTileDimensions);
             assert tileMap != null;
             final List<Tile> baseGrid = tileMap.get(fullImageSampleSize);
+            if (baseGrid == null) return;
 
             assert decoder != null;
             if (hasBaseLayerTiles) {
@@ -2456,7 +2457,7 @@ public class SubsamplingScaleImageView extends View {
     }
 
     /**
-     * Quadratic easing for fling. With thanks to Robert Penner - http://gizma.com/easing/
+     * Quadratic easing for fling. With thanks to Robert Penner - <a href="http://gizma.com/easing/">...</a>
      *
      * @param time     Elapsed time
      * @param from     Start value
@@ -2470,7 +2471,7 @@ public class SubsamplingScaleImageView extends View {
     }
 
     /**
-     * Quadratic easing for scale and center animations. With thanks to Robert Penner - http://gizma.com/easing/
+     * Quadratic easing for scale and center animations. With thanks to Robert Penner - <a href="http://gizma.com/easing/">...</a>
      *
      * @param time     Elapsed time
      * @param from     Start value

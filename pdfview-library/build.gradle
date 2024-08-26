@@ -1,35 +1,39 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.5.2'
+    }
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
 
-apply from: "$rootDir/jcenter/info.gradle"
-
-
-//  to upload to bintray use ./gradlew build bintrayUpload
 android {
-    compileSdkVersion versions.compileSdk
-    buildToolsVersion versions.buildTools
+    namespace "com.pdfview.pdf"
 
     defaultConfig {
-        minSdkVersion versions.minSdk
-        targetSdkVersion versions.targetSdk
+        minSdkVersion 23
+        compileSdk 35
+        targetSdkVersion 35
     }
 
-    buildTypes {
-        debug {
-            debuggable = true
+    android {
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_17
+            targetCompatibility JavaVersion.VERSION_17
         }
-        release {
-            debuggable = false
+        kotlinOptions {
+            jvmTarget = '17'
         }
     }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin}"
-    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.20"
+    implementation 'androidx.annotation:annotation:1.8.2'
 }
-
-apply from: "$rootDir/jcenter/maven-install.gradle"
-apply from: "$rootDir/jcenter/bintray.gradle"

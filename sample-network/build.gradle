@@ -2,13 +2,14 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 29
     defaultConfig {
-        applicationId "com.pdfview_sample.sample"
-        minSdkVersion 21
-        targetSdkVersion 29
-        versionCode 1
+        namespace "com.pdfview_sample.sample"
+
+        minSdkVersion 23
+        compileSdk 35
+        targetSdkVersion 35
         versionName "1.0"
+
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     kotlinOptions {
@@ -23,16 +24,15 @@ android {
 }
 
 dependencies {
-//    implementation 'com.pdfview:pdfview-android:1.0.0'
     implementation project(':pdfview-library')
-    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    //this provides toUri(), by viewModel and other extensions
-    implementation "androidx.fragment:fragment-ktx:1.2.5"
+
+    implementation"org.jetbrains.kotlin:kotlin-stdlib:1.9.20"
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation "androidx.fragment:fragment-ktx:1.8.2"
 
     implementation 'com.squareup.okhttp3:okhttp:4.7.2'
 
-    testImplementation 'junit:junit:4.13'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }
